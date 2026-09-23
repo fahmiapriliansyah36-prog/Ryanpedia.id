@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beli Kuota Murah & Cepat - Ryanpedia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        #cart-sidebar, #menu-sidebar { transition: transform 0.3s ease-in-out; }
+        .translate-x-full { transform: translateX(100%); }
+        .-translate-x-full { transform: translateX(-100%); }
+        @keyframes slideInUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-enter { animation: slideInUp 0.3s forwards; }
+
+        /* Efek Daun Hijau Jatuh dari Atas ke Bawah */
+        .leaf-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .leaf {
+            position: absolute;
+            top: -50px;
+            color: rgba(34, 197, 94, 0.5);
+            font-size: 20px;
+            animation: fallLeaf linear infinite;
+        }
+        @keyframes fallLeaf {
+            0% {
+                transform: translateY(-50px) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            20% {
+                opacity: 0.9;
+            }
+            100% {
+                transform: translateY(105vh) translateX(100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white font-sans text-gray-800 min-h-screen relative">
+
+    <!-- Efek Background Daun Jatuh Hijau -->
+    <div class="leaf-container" id="leaf-container"></div>
+
+    <!-- Navbar -->
+    <nav class="bg-blue-600/90 backdrop-blur-md shadow-md fixed w-full z-40 top-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleMenu()" class="text-white p-2 focus:outline-none hover:bg-blue-700 rounded-lg transition text-xl">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <!-- Info User Login di Navbar -->
+                    <div id="nav-user-info" class="hidden sm:flex items-center space-x-2 bg-blue-700/60 px-3 py-1 rounded-full text-white text-xs font-semibold">
+                        <img id="nav-user-avatar" src="" alt="Avatar" class="w-6 h-6 rounded-full object-cover border border-white hidden">
+                        <i id="nav-user-icon" class="fas fa-user-circle text-sm"></i>
+                        <span id="nav-username">Guest</span>
+                    </div>
+                </div>
+                <!-- Logo / Judul Navigasi -->
+                <div class="flex items-center text-white font-bold text-lg">
+                    <span>Ryanpedia.id</span>
+                </div>
+                <div class="flex items-center">
+                    <button onclick="toggleCart()" class="text-white relative p-2 focus:outline-none hover:bg-blue-700 rounded-full transition">
+                        <i class="fas fa-shopping-cart text-xl"></i>
+                        <span id="cart-badge" class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Menu Sidebar (Garis Tiga) -->
+    <div id="menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden transition-opacity" onclick="toggleMenu()"></div>
+    <div id="menu-sidebar" class="fixed inset-y-0 left-0 max-w-xs w-full bg-white/95 backdrop-blur-md shadow-xl z-50 -translate-x-full flex flex-col">
+        <div class="p-4 border-b flex justify-between items-center bg-blue-600 text-white">
+            <h2 class="text-lg font-bold"><i class="fas fa-user-circle mr-2"></i>Menu Utama</h2>
+            <button onclick="toggleMenu()" class="text-white hover:text-gray-200 transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="p-4 flex-1 overflow-y-auto space-y-3">
+            <div id="sidebar-user-card" class="bg-blue-50 p-3 rounded-xl border border-blue-100 mb-2 flex items-center space-x-3">
+                <div id="sidebar-avatar-wrapper" class="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <img id="sidebar-user-img" src="" alt="" class="w-full h-full object-cover hidden">
+                    <i id="sidebar-user-default-icon" class="fas fa-user text-blue-600"></i>
+                </div>
+                <div class="overflow-hidden">
+                    <p class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Status Akun:</p>
+                    <p id="sidebar-user-name" class="font-bold text-sm text-blue-700 truncate">Belum Login</p>
+                </div>
+            </div>
+            <div id="auth-buttons-container" class="space-y-2">
+                <button onclick="openLoginModal()" class="w-full text-left p-3 rounded-lg hover:bg-blue-50 text-gray-700 font-medium flex items-center transition">
+                    <i class="fas fa-sign-in-alt mr-3 text-blue-600"></i> Login Akun
+                </button>
+                <button onclick="openRegisterModal()" class="w-full text-left p-3 rounded-lg hover:bg-blue-50 text-gray-700 font-medium flex items-center transition">
+                    <i class="fas fa-user-plus mr-3 text-emerald-600"></i> Daftar Akun Baru
+                </button>
+            </div>
+            <div id="logout-button-container" class="hidden">
+                <button onclick="processLogout()" class="w-full text-left p-3 rounded-lg hover:bg-red-50 text-red-600 font-medium flex items-center transition">
+                    <i class="fas fa-sign-out-alt mr-3"></i> Keluar Akun (Logout)
+                </button>
+            </div>
+            <hr class="my-2">
+            <button onclick="toggleMenu()" class="w-full text-left p-3 rounded-lg hover:bg-blue-50 text-gray-700 font-medium flex items-center transition">
+                <i class="fas fa-home mr-3 text-blue-600"></i> Beranda / Beli Kuota
+            </button>
+            <button onclick="openHistoryModal()" class="w-full text-left p-3 rounded-lg hover:bg-blue-50 text-gray-700 font-medium flex items-center transition">
+                <i class="fas fa-history mr-3 text-blue-600"></i> Riwayat Transaksi
+            </button>
+            <button onclick="openCSChat()" class="w-full text-left p-3 rounded-lg hover:bg-blue-50 text-gray-700 font-medium flex items-center transition">
+                <i class="fas fa-headset mr-3 text-green-600"></i> Chat CS (Bantuan)
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 pt-24 pb-12 min-h-screen">
+        
+        <!-- Status Jam Operasional Admin -->
+        <div class="bg-white/60 backdrop-blur-md p-4 rounded-xl shadow-sm border border-white/80 mb-4 flex items-center justify-between text-gray-800">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center text-lg">
+                    <i class="fas fa-store"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm text-gray-800">Status Toko / Admin</h3>
+                    <p class="text-xs text-gray-600">Jam Operasional: 08:00 - 22:00 WIB</p>
+                </div>
+            </div>
+            <div id="store-status-badge" class="px-3 py-1.5 rounded-full text-xs font-bold flex items-center space-x-1.5 shadow-sm">
+                <span id="status-dot" class="w-2.5 h-2.5 rounded-full"></span>
+                <span id="status-text">Memuat...</span>
+            </div>
+        </div>
+
+        <!-- Pengumuman Regional Jateng -->
+        <div class="bg-amber-50/90 backdrop-blur-md border border-amber-200 p-4 rounded-xl shadow-sm mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-900">
+            <div class="flex items-start space-x-3">
+                <div class="text-amber-600 text-xl mt-0.5">
+                    <i class="fas fa-bullhorn"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-sm">Informasi Regional Paket</h4>
+                    <p class="text-xs text-amber-800">Paket kuota di bawah ini khusus untuk **Regional Jateng (Jawa Tengah)**. Untuk pemesanan di luar Jateng, silakan hubungi admin terlebih dahulu.</p>
+                </div>
+            </div>
+            <a href="https://whatsapp.com" target="_blank" class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition flex items-center space-x-1.5 whitespace-nowrap shadow-xs flex-shrink-0">
+                <i class="fab fa-whatsapp text-sm"></i>
+                <span>Chat Admin / CS</span>
+            </a>
+        </div>
+
+        <!-- Input Section -->
+        <div class="bg-white/60 backdrop-blur-md p-6 rounded-xl shadow-sm border border-white/80 mb-8 space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Handphone</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-mobile-alt text-gray-400"></i>
+                    </div>
+                    <input type="number" id="phone-input" class="pl-10 w-full bg-white/70 backdrop-blur text-gray-800 border border-gray-200 rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Contoh: 081234567890" oninput="checkInputs()">
+                </div>
+            </div>
+
+            <!-- Setelan Awal / Info Otomatis Operator -->
+            <div class="bg-blue-50/70 border border-blue-100 rounded-xl p-4 flex items-center space-x-3">
+                <div class="text-blue-600 text-xl">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-blue-800 uppercase tracking-wider">Deteksi Operator Otomatis</h4>
+                    <p class="text-xs text-gray-600">Operator akan terdeteksi secara otomatis berdasarkan nomor handphone yang Anda masukkan di atas.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter & Product List Section -->
+        <div id="product-section" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Pilih Paket</h2>
+                <div class="flex space-x-2">
+                    <button class="filter-btn active bg-blue-600 text-white px-3 py-1 text-sm rounded-full shadow" data-filter="all">Semua</button>
+                    <button class="filter-btn bg-white/60 backdrop-blur text-gray-700 hover:bg-white/90 px-3 py-1 text-sm rounded-full transition border border-gray-200" data-filter="harian">Harian</button>
+                    <button class="filter-btn bg-white/60 backdrop-blur text-gray-700 hover:bg-white/90 px-3 py-1 text-sm rounded-full transition border border-gray-200" data-filter="bulanan">Bulanan</button>
+                </div>
+            </div>
+            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+        </div>
+        
+        <div id="empty-state" class="text-center py-12 bg-white/60 backdrop-blur-md rounded-xl shadow-sm border border-white/80 mb-8">
+            <i class="fas fa-sim-card text-4xl text-gray-400 mb-3"></i>
+            <p class="text-gray-600">Silakan masukkan nomor HP untuk melihat daftar paket yang tersedia.</p>
+        </div>
+
+        <!-- Section Rating & Ulasan Toko -->
+        <div class="bg-white/60 backdrop-blur-md p-6 rounded-xl shadow-sm border border-white/80 mb-8">
+            <div class="flex flex-col sm:flex-row items-center justify-between pb-6 border-b border-gray-200/50 gap-4">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800">Ulasan & Rating Toko</h3>
+                    <p class="text-sm text-gray-600">Berdasarkan kepuasan ribuan pelanggan</p>
+                </div>
+                <div class="flex items-center space-x-3 bg-blue-50/70 backdrop-blur border border-blue-100 px-4 py-2 rounded-xl">
+                    <div class="text-2xl font-black text-blue-600">4.9</div>
+                    <div>
+                        <div class="text-yellow-400 text-sm">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                        <span class="text-xs text-gray-600 font-medium">1,420 Ulasan Positif</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div class="bg-white/70 backdrop-blur p-4 rounded-lg border border-gray-200/60 shadow-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-sm text-gray-800">Rian S.</span>
+                        <div class="text-yellow-400 text-xs"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    </div>
+                    <p class="text-xs text-gray-600">"Mantap banget, kuota Axis-nya masuk kurang dari 2 menit gak pakai lama!"</p>
+                </div>
+                <div class="bg-white/70 backdrop-blur p-4 rounded-lg border border-gray-200/60 shadow-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-sm text-gray-800">Putri A.</span>
+                        <div class="text-yellow-400 text-xs"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    </div>
+                    <p class="text-xs text-gray-600">"Harga paling murah dibanding konter biasa. Recommended banget web-nya."</p>
+                </div>
+                <div class="bg-white/70 backdrop-blur p-4 rounded-lg border border-gray-200/60 shadow-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-sm text-gray-800">Dandi K.</span>
+                        <div class="text-yellow-400 text-xs"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    </div>
+                    <p class="text-xs text-gray-600">"Proses bayar pakai VA otomatis diverifikasi. Top pelayanannya!"</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Sosial Media -->
+        <div class="bg-white/60 backdrop-blur-md p-6 rounded-xl shadow-sm border border-white/80 text-center mb-8">
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Terhubung Dengan Kami</h3>
+            <p class="text-sm text-gray-600 mb-4">Dapatkan info promo menarik dan update harga terbaru di sosial media kami.</p>
+            <div class="flex justify-center space-x-4">
+                <a href="https://instagram.com" target="_blank" class="w-10 h-10 rounded-full bg-white/80 backdrop-blur text-pink-600 hover:bg-pink-600 hover:text-white flex items-center justify-center transition shadow-sm text-lg border border-pink-200">
+                    <i class="fab fa-instagram"></i>
+                </a>
+                <a href="https://whatsapp.com" target="_blank" class="w-10 h-10 rounded-full bg-white/80 backdrop-blur text-green-600 hover:bg-green-600 hover:text-white flex items-center justify-center transition shadow-sm text-lg border border-green-200">
+                    <i class="fab fa-whatsapp"></i>
+                </a>
+                <a href="https://www.tiktok.com/@ryannsyaahh" target="_blank" class="w-10 h-10 rounded-full bg-white/80 backdrop-blur text-black hover:bg-black hover:text-white flex items-center justify-center transition shadow-sm text-lg border border-gray-200">
+                    <i class="fab fa-tiktok"></i>
+                </a>
+                <a href="https://www.youtube.com/@ryannsyahhh" target="_blank" class="w-10 h-10 rounded-full bg-white/80 backdrop-blur text-red-600 hover:bg-red-600 hover:text-white flex items-center justify-center transition shadow-sm text-lg border border-red-200">
+                    <i class="fab fa-youtube"></i>
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-blue-900/90 backdrop-blur-md text-white text-center py-6">
+        <p class="text-sm">&copy; 2026 Ryanpedia.id. All rights reserved.</p>
+    </footer>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden flex items-center justify-center p-4">
+        <div class="bg-white/95 backdrop-blur-md w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            <div class="bg-blue-600 p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold text-lg"><i class="fas fa-sign-in-alt mr-2"></i>Login Akun</h3>
+                <button onclick="closeLoginModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4">
+                <p class="text-xs text-gray-600">Masukkan nomor HP terdaftar untuk masuk kembali ke akun Anda.</p>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Nomor WhatsApp / HP</label>
+                    <input type="number" id="login-phone" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:ring-blue-500 focus:border-blue-500 bg-white" placeholder="Contoh: 081234567890">
+                </div>
+                <button onclick="processLogin()" class="w-full bg-blue-600 text-white font-bold py-2.5 rounded-lg hover:bg-blue-700 transition shadow">Login Sekarang</button>
+                <div class="text-center pt-2">
+                    <span class="text-xs text-gray-500">Belum punya akun? </span>
+                    <button onclick="closeLoginModal(); openRegisterModal();" class="text-xs text-blue-600 font-bold hover:underline">Daftar di sini</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden flex items-center justify-center p-4">
+        <div class="bg-white/95 backdrop-blur-md w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            <div class="bg-emerald-600 p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold text-lg"><i class="fas fa-user-plus mr-2"></i>Daftar Akun Baru</h3>
+                <button onclick="closeRegisterModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4">
+                <p class="text-xs text-gray-600">Buat akun baru lengkap dengan foto profil pilihan Anda.</p>
+                
+                <div class="flex flex-col items-center">
+                    <div class="w-20 h-20 rounded-full border-2 border-emerald-500 overflow-hidden bg-gray-100 flex items-center justify-center mb-2 relative shadow-inner">
+                        <img id="reg-preview-img" src="" alt="Preview" class="w-full h-full object-cover hidden">
+                        <i id="reg-preview-icon" class="fas fa-camera text-2xl text-gray-400"></i>
+                    </div>
+                    <label class="cursor-pointer bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-bold transition border border-emerald-200 shadow-xs">
+                        <i class="fas fa-upload mr-1"></i> Pilih Foto Profil
+                        <input type="file" id="reg-avatar-file" accept="image/*" class="hidden" onchange="previewAvatar(event)">
+                    </label>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Lengkap</label>
+                    <input type="text" id="reg-name" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:ring-emerald-500 focus:border-emerald-500 bg-white" placeholder="Contoh: Budi Santoso">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Nomor WhatsApp / HP</label>
+                    <input type="number" id="reg-phone" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:ring-emerald-500 focus:border-emerald-500 bg-white" placeholder="Contoh: 081234567890">
+                </div>
+                <button onclick="processRegister()" class="w-full bg-emerald-600 text-white font-bold py-2.5 rounded-lg hover:bg-emerald-700 transition shadow">Daftar & Masuk</button>
+                <div class="text-center pt-2">
+                    <span class="text-xs text-gray-500">Sudah punya akun? </span>
+                    <button onclick="closeRegisterModal(); openLoginModal();" class="text-xs text-blue-600 font-bold hover:underline">Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shopping Cart Sidebar -->
+    <div id="cart-overlay" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden transition-opacity" onclick="toggleCart()"></div>
+    <div id="cart-sidebar" class="fixed inset-y-0 right-0 max-w-sm w-full bg-white/95 backdrop-blur-md shadow-xl z-50 translate-x-full flex flex-col">
+        <div class="p-4 border-b flex justify-between items-center bg-blue-50/80 backdrop-blur">
+            <h2 class="text-lg font-bold text-gray-800"><i class="fas fa-shopping-cart mr-2"></i>Keranjang Anda</h2>
+            <button onclick="toggleCart()" class="text-gray-500 hover:text-red-500 transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
+            <p class="text-center text-gray-500 mt-10">Keranjang masih kosong.</p>
+        </div>
+        <div class="p-4 border-t bg-white/80 backdrop-blur">
+            <div class="flex justify-between items-center mb-4">
+                <span class="font-bold text-gray-600">Total Tagihan:</span>
+                <span id="cart-total" class="font-bold text-xl text-blue-600">Rp 0</span>
+            </div>
+            <button onclick="openPaymentModal()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-md flex justify-center items-center">
+                Lanjutkan Pembayaran <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Skrip JavaScript Fungsional -->
+    <script>
+        const databasePaket = {
+            'telkomsel': [
+                { id: 1, nama: 'Telkomsel 5GB / 3 Hari', kategori: 'harian', harga: 15000, desc: 'Kuota Utama 5GB berlaku 3 hari.' },
+                { id: 2, nama: 'Telkomsel 15GB / 30 Hari', kategori: 'bulanan', harga: 55000, desc: 'Kuota Utama 15GB + 5GB OMG.' },
+                { id: 3, nama: 'Telkomsel 30GB / 30 Hari', kategori: 'bulanan', harga: 100000, desc: 'Kuota Utama 30GB all network.' }
+            ],
+            'indosat': [
+                { id: 4, nama: 'Indosat 7GB / 3 Hari', kategori: 'harian', harga: 14000, desc: 'Kuota Utama 7GB 24 Jam.' },
+                { id: 5, nama: 'Indosat 20GB / 30 Hari', kategori: 'bulanan', harga: 50000, desc: 'Freedom Internet 20GB.' },
+                { id: 6, nama: 'Indosat 50GB / 30 Hari', kategori: 'bulanan', harga: 110000, desc: 'Freedom Internet 50GB puas.' }
+            ],
+            'xl': [
+                { id: 7, nama: 'XL 6GB / 3 Hari', kategori: 'harian', harga: 13000, desc: 'Akselerasi kuota harian XL.' },
+                { id: 8, nama: 'XL Extra Combo 25GB', kategori: 'bulanan', harga: 60000, desc: 'Bonus telepon dan kuota utama.' }
+            ],
+            'axis': [
+                { id: 9, nama: 'Axis 5GB / 5 Hari', kategori: 'harian', harga: 12000, desc: 'Bronet 24 Jam.' },
+                { id: 10, nama: 'Axis Owsem 32GB', kategori: 'bulanan', harga: 52000, desc: 'Kuota utama + sosmed.' }
+            ],
+            'tri': [
+                { id: 11, nama: 'Tri Aon 10GB', kategori: 'harian', harga: 20000, desc: 'Masa aktif mengikuti kartu.' },
+                { id: 12, nama: 'Tri AlwaysOn 33GB', kategori: 'bulanan', harga: 75000, desc: 'Kuota tidak akan hangus.' }
+            ],
+            'smartfren': [
+                { id: 13, nama: 'Smartfren 10GB / 7 Hari', kategori: 'harian', harga: 18000, desc: 'Volume Based harian.' },
+                { id: 14, nama: 'Smartfren Unlimited Nonstop', kategori: 'bulanan', harga: 65000, desc: 'Internet sepuasnya.' }
+            ],
+            'byu': [
+                { id: 15, nama: 'by.U 10GB / 30 Hari', kategori: 'bulanan', harga: 30000, desc: 'Pilihan sempurna buat harian.' }
+            ]
+        };
+
+        let currentOperator = '';
+        let currentFilter = 'all';
+        let cart = [];
+        let currentUser = null;
+
+        function detectOperator(phone) {
+            if (phone.startsWith('0811') || phone.startsWith('0812') || phone.startsWith('0813') || phone.startsWith('0821') || phone.startsWith('0822') || phone.startsWith('0823') || phone.startsWith('0852') || phone.startsWith('0853')) {
+                return 'telkomsel';
+            } else if (phone.startsWith('0814') || phone.startsWith('0815') || phone.startsWith('0816') || phone.startsWith('0855') || phone.startsWith('0856') || phone.startsWith('0857') || phone.startsWith('0858')) {
+                return 'indosat';
+            } else if (phone.startsWith('0817') || phone.startsWith('0818') || phone.startsWith('0819') || phone.startsWith('0859') || phone.startsWith('0877') || phone.startsWith('0878')) {
+                return 'xl';
+            } else if (phone.startsWith('0831') || phone.startsWith('0832') || phone.startsWith('0833') || phone.startsWith('0838')) {
+                return 'axis';
+            } else if (phone.startsWith('0895') || phone.startsWith('0896') || phone.startsWith('0897') || phone.startsWith('0898') || phone.startsWith('0899')) {
+                return 'tri';
+            } else if (phone.startsWith('0881') || phone.startsWith('0882') || phone.startsWith('0883') || phone.startsWith('0884') || phone.startsWith('0885') || phone.startsWith('0886') || phone.startsWith('0887') || phone.startsWith('0888')) {
+                return 'smartfren';
+            } else if (phone.startsWith('0851')) {
+                return 'byu';
+            }
+            return 'telkomsel';
+        }
+
+        function checkInputs() {
+            const phone = document.getElementById('phone-input').value;
+            const productSection = document.getElementById('product-section');
+            const emptyState = document.getElementById('empty-state');
+
+            if (phone.length >= 4) {
+                currentOperator = detectOperator(phone);
+                productSection.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+                renderProducts();
+            } else {
+                productSection.classList.add('hidden');
+                emptyState.classList.add('hidden');
+            }
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = '';
+
+            const list = databasePaket[currentOperator] || [];
+            const filtered = list.filter(item => currentFilter === 'all' || item.kategori === currentFilter);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<p class="text-gray-500 col-span-full text-center">Tidak ada paket untuk kategori ini.</p>';
+                return;
+            }
+
+            filtered.forEach(item => {
+                grid.innerHTML += `
+                    <div class="bg-white/80 backdrop-blur p-4 rounded-xl border border-gray-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition">
+                        <div>
+                            <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700">${item.kategori}</span>
+                            <h3 class="font-bold text-gray-800 mt-2">${item.nama}</h3>
+                            <p class="text-xs text-gray-500 mt-1">${item.desc}</p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                            <span class="font-bold text-blue-600 text-sm">Rp ${item.harga.toLocaleString('id-ID')}</span>
+                            <button onclick="addToCart('${item.nama}', ${item.harga})" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition shadow-xs">
+                                <i class="fas fa-plus mr-1"></i> Beli
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleMenu() {
+            const sidebar = document.getElementById('menu-sidebar');
+            const overlay = document.getElementById('menu-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        function toggleCart() {
+            const sidebar = document.getElementById('cart-sidebar');
+            const overlay = document.getElementById('cart-overlay');
+            sidebar.classList.toggle('translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        function addToCart(nama, harga) {
+            cart.push({ nama, harga });
+            updateCartUI();
+            toggleCart();
+        }
+
+        function updateCartUI() {
+            const cartItems = document.getElementById('cart-items');
+            const cartBadge = document.getElementById('cart-badge');
+            const cartTotal = document.getElementById('cart-total');
+
+            cartBadge.innerText = cart.length;
+            if (cart.length > 0) {
+                cartBadge.classList.remove('hidden');
+            } else {
+                cartBadge.classList.add('hidden');
+            }
+
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<p class="text-center text-gray-500 mt-10">Keranjang masih kosong.</p>';
+                cartTotal.innerText = 'Rp 0';
+                return;
+            }
+
+            cartItems.innerHTML = '';
+            let total = 0;
+            cart.forEach((item, index) => {
+                total += item.harga;
+                cartItems.innerHTML += `
+                    <div class="bg-white p-3 rounded-lg border border-gray-200 flex justify-between items-center shadow-xs">
+                        <div>
+                            <p class="font-bold text-sm text-gray-800">${item.nama}</p>
+                            <p class="text-xs text-blue-600">Rp ${item.harga.toLocaleString('id-ID')}</p>
+                        </div>
+                        <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700 text-sm"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+            });
+            cartTotal.innerText = `Rp ${total.toLocaleString('id-ID')}`;
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        function checkStoreStatus() {
+            const now = new Date();
+            const hour = now.getHours();
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            const badge = document.getElementById('store-status-badge');
+
+            if (hour >= 8 && hour < 22) {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+                text.innerText = "Toko Buka (Online)";
+                badge.className = "px-3 py-1.5 rounded-full text-xs font-bold flex items-center space-x-1.5 shadow-sm bg-emerald-50 text-emerald-700 border border-emerald-200";
+            } else {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
+                text.innerText = "Toko Tutup (Offline)";
+                badge.className = "px-3 py-1.5 rounded-full text-xs font-bold flex items-center space-x-1.5 shadow-sm bg-red-50 text-red-700 border border-red-200";
+            }
+        }
+        checkStoreStatus();
+
+        function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); toggleMenu(); }
+        function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
+        function openRegisterModal() { document.getElementById('register-modal').classList.remove('hidden'); toggleMenu(); }
+        function closeRegisterModal() { document.getElementById('register-modal').classList.add('hidden'); }
+
+        function processLogin() {
+            const phone = document.getElementById('login-phone').value;
+            if (!phone) { alert('Masukkan nomor HP Anda!'); return; }
+            currentUser = { name: 'Pengguna Setia', phone: phone, avatar: '' };
+            updateUserUI();
+            closeLoginModal();
+            alert('Berhasil Login!');
+        }
+
+        function processRegister() {
+            const name = document.getElementById('reg-name').value;
+            const phone = document.getElementById('reg-phone').value;
+            if (!name || !phone) { alert('Harap isi nama dan nomor HP!'); return; }
+            currentUser = { name: name, phone: phone, avatar: '' };
+            updateUserUI();
+            closeRegisterModal();
+            alert('Registrasi Berhasil & Berhasil Masuk!');
+        }
+
+        function processLogout() {
+            currentUser = null;
+            updateUserUI();
+            toggleMenu();
+            alert('Berhasil Keluar.');
+        }
+
+        function updateUserUI() {
+            const navUsername = document.getElementById('nav-username');
+            const sidebarUserName = document.getElementById('sidebar-user-name');
+            const authContainer = document.getElementById('auth-buttons-container');
+            const logoutContainer = document.getElementById('logout-button-container');
+
+            if (currentUser) {
+                navUsername.innerText = currentUser.name;
+                sidebarUserName.innerText = currentUser.name;
+                authContainer.classList.add('hidden');
+                logoutContainer.classList.remove('hidden');
+            } else {
+                navUsername.innerText = 'Guest';
+                sidebarUserName.innerText = 'Belum Login';
+                authContainer.classList.remove('hidden');
+                logoutContainer.classList.add('hidden');
+            }
+        }
+
+        function previewAvatar(event) {
+            const reader = new FileReader();
+            reader.onload = function(){
+                const output = document.getElementById('reg-preview-img');
+                output.src = reader.result;
+                output.classList.remove('hidden');
+                document.getElementById('reg-preview-icon').classList.add('hidden');
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        function openHistoryModal() { alert('Fitur Riwayat Transaksi akan segera dibuka.'); toggleMenu(); }
+        function openCSChat() { window.open('https://whatsapp.com', '_blank'); toggleMenu(); }
+        function openPaymentModal() { alert('Menuju halaman pembayaran secure gateway...'); }
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.classList.remove('bg-blue-600', 'text-white', 'shadow');
+                    b.classList.add('bg-white/60', 'text-gray-700');
+                });
+                this.classList.add('bg-blue-600', 'text-white', 'shadow');
+                this.classList.remove('bg-white/60', 'text-gray-700');
+                
+                currentFilter = this.getAttribute('data-filter');
+                renderProducts();
+            });
+        });
+    </script>
+</body>
+</html>
