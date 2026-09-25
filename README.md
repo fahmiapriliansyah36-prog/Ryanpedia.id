@@ -1,2 +1,1 @@
-# Ryanpedia.id
-belajar
+
